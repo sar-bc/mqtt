@@ -1,5 +1,5 @@
 # Создаем пользователя admin с паролем admin123
-docker exec -it mqtt_cont sh -c "mosquitto_passwd -b /mosquitto/config/passwords.txt sar-bc Vik159753"
+docker exec -it mqtt_cont sh -c "mosquitto_passwd -b /mosquitto/config/passwords.txt user1 pass1"
 
 # Перезапускаем Mosquitto
 docker exec mqtt_cont sh -c "kill -HUP 1"
