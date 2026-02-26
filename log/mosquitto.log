@@ -1,0 +1,120 @@
+1772133543: mosquitto version 2.0.18 starting
+1772133543: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133543: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133543: Error opening password file "/mosquitto/config/passwords.txt".
+1772133544: mosquitto version 2.0.18 starting
+1772133544: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133544: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133544: Error opening password file "/mosquitto/config/passwords.txt".
+1772133545: mosquitto version 2.0.18 starting
+1772133545: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133545: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133545: Error opening password file "/mosquitto/config/passwords.txt".
+1772133546: mosquitto version 2.0.18 starting
+1772133546: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133546: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133546: Error opening password file "/mosquitto/config/passwords.txt".
+1772133547: mosquitto version 2.0.18 starting
+1772133547: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133547: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133547: Error opening password file "/mosquitto/config/passwords.txt".
+1772133550: mosquitto version 2.0.18 starting
+1772133550: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133550: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133550: Error opening password file "/mosquitto/config/passwords.txt".
+1772133553: mosquitto version 2.0.18 starting
+1772133553: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133553: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133553: Error opening password file "/mosquitto/config/passwords.txt".
+1772133561: mosquitto version 2.0.18 starting
+1772133561: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133561: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133561: Error opening password file "/mosquitto/config/passwords.txt".
+1772133574: mosquitto version 2.0.18 starting
+1772133574: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133574: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133574: Error opening password file "/mosquitto/config/passwords.txt".
+1772133600: mosquitto version 2.0.18 starting
+1772133600: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133600: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133600: Error opening password file "/mosquitto/config/passwords.txt".
+1772133652: mosquitto version 2.0.18 starting
+1772133652: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133652: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133652: Error opening password file "/mosquitto/config/passwords.txt".
+1772133713: mosquitto version 2.0.18 starting
+1772133713: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133713: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133713: Error opening password file "/mosquitto/config/passwords.txt".
+1772133743: mosquitto version 2.0.18 starting
+1772133743: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133743: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133743: Error opening password file "/mosquitto/config/passwords.txt".
+1772133744: mosquitto version 2.0.18 starting
+1772133744: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133744: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133744: Error opening password file "/mosquitto/config/passwords.txt".
+1772133745: mosquitto version 2.0.18 starting
+1772133745: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133745: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133745: Error opening password file "/mosquitto/config/passwords.txt".
+1772133746: mosquitto version 2.0.18 starting
+1772133746: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133746: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133746: Error opening password file "/mosquitto/config/passwords.txt".
+1772133747: mosquitto version 2.0.18 starting
+1772133747: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133747: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133747: Error opening password file "/mosquitto/config/passwords.txt".
+1772133749: mosquitto version 2.0.18 starting
+1772133749: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133749: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133749: Error opening password file "/mosquitto/config/passwords.txt".
+1772133753: mosquitto version 2.0.18 starting
+1772133753: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133753: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133753: Error opening password file "/mosquitto/config/passwords.txt".
+1772133760: mosquitto version 2.0.18 starting
+1772133760: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133760: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133760: Error opening password file "/mosquitto/config/passwords.txt".
+1772133774: mosquitto version 2.0.18 starting
+1772133774: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133774: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133774: Error opening password file "/mosquitto/config/passwords.txt".
+1772133800: mosquitto version 2.0.18 starting
+1772133800: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133800: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133800: Error opening password file "/mosquitto/config/passwords.txt".
+1772133852: mosquitto version 2.0.18 starting
+1772133852: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133852: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772133852: Error opening password file "/mosquitto/config/passwords.txt".
+1772133916: mosquitto version 2.0.18 starting
+1772133916: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133916: Warning: File /mosquitto/config/passwords.txt has world readable permissions. Future versions will refuse to load this file.
+To fix this, use `chmod 0700 /mosquitto/config/passwords.txt`.
+1772133916: Warning: File /mosquitto/config/acl.txt has world readable permissions. Future versions will refuse to load this file.
+To fix this, use `chmod 0700 /mosquitto/config/acl.txt`.
+1772133916: Opening ipv4 listen socket on port 1883.
+1772133916: Opening websockets listen socket on port 9001.
+1772133916: mosquitto version 2.0.18 running
+1772133990: mosquitto version 2.0.18 terminating
+1772133990: Saving in-memory database to /mosquitto/data//mosquitto.db.
+1772133999: mosquitto version 2.0.18 starting
+1772133999: Config loaded from /mosquitto/config/mosquitto.conf.
+1772133999: Warning: File /mosquitto/config/passwords.txt has world readable permissions. Future versions will refuse to load this file.
+To fix this, use `chmod 0700 /mosquitto/config/passwords.txt`.
+1772133999: Warning: File /mosquitto/config/acl.txt has world readable permissions. Future versions will refuse to load this file.
+To fix this, use `chmod 0700 /mosquitto/config/acl.txt`.
+1772133999: Opening ipv4 listen socket on port 1883.
+1772133999: Opening websockets listen socket on port 9001.
+1772133999: mosquitto version 2.0.18 running
+1772134135: Reloading config.
+1772134135: Note: It is recommended to replace `message_size_limit` with `max_packet_size`.
+1772134292: Reloading config.
+1772134292: Note: It is recommended to replace `message_size_limit` with `max_packet_size`.
+1772134292: Error: Unable to open pwfile "/mosquitto/config/passwords.txt".
+1772134292: Error opening password file "/mosquitto/config/passwords.txt".
+1772134348: mosquitto version 2.0.18 terminating
+1772134348: Saving in-memory database to /mosquitto/data//mosquitto.db.
