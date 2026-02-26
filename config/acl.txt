@@ -1,0 +1,23 @@
+# ACL файл для управления правами доступа
+
+# Администратор имеет доступ ко всем топикам
+user admin
+topic readwrite #
+
+# Примеры для коммерческого использования:
+# Датчики температуры могут только публиковать в свои топики
+user sensor_user
+topic write sensors/+/temperature
+
+# Приложения могут читать данные датчиков
+user app_user
+topic read sensors/+/temperature
+
+# Конкретные примеры:
+# Пользователь user1 может читать/писать в топики user1/#
+user user1
+topic readwrite user1/#
+
+# Пользователь user2 может только читать в топиках public/#
+user user2
+topic read public/#
