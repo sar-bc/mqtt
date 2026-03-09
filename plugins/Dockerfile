@@ -1,5 +1,6 @@
 # Этап 1: Сборка Go-плагина
-FROM golang:1.24-alpine AS builder  
+FROM golang:1.24-alpine AS builder
+
 # Устанавливаем зависимости для сборки
 RUN apk add --no-cache \
     git \
@@ -10,13 +11,16 @@ RUN apk add --no-cache \
     sqlite-dev \
     make
 
+# Добавляем необходимые флаги для 64-битной сборки
+ENV CGO_CFLAGS="-I/usr/include -fPIC -D_LARGEFILE64_SOURCE"
+ENV CGO_LDFLAGS="-shared"
+ENV GOARCH=amd64
+
 # Клонируем актуальный форк Go-плагина
 WORKDIR /src
 RUN git clone https://github.com/iegomez/mosquitto-go-auth.git .
 
 # Собираем плагин
-ENV CGO_CFLAGS="-I/usr/include -fPIC"
-ENV CGO_LDFLAGS="-shared"
 RUN make
 
 # Этап 2: Финальный образ
