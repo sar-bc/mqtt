@@ -7,7 +7,7 @@ services:
       MARIADB_DATABASE: mqtt_auth
       MARIADB_USER: mqtt_user
       MARIADB_PASSWORD: MqttSecurePass123!
-      MARIADB_ROOT_HOST: '%'  # Разрешаем подключения с любого хоста
+      MARIADB_ROOT_HOST: '%'
     volumes:
       - ./mariadb_data:/var/lib/mysql
       - ./init:/docker-entrypoint-initdb.d
