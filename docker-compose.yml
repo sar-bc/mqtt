@@ -1,26 +1,14 @@
-version: '3.8'
-
 services:
   mosquitto:
-    build: ./plugins  # Собираем из нашего Dockerfile
+    build: ./plugins
     container_name: mqtt_cont
     ports:
       - "1883:1883"
       - "9001:9001"
     volumes:
-      - ./config:/mosquitto/config
+      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf
       - ./data:/mosquitto/data
       - ./log:/mosquitto/log
+      - ./config:/mosquitto/config
     restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    networks:
-      - mqtt_network
-
-networks:
-  mqtt_network:
-    driver: bridge
     
