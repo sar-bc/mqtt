@@ -1,15 +1,15 @@
 #!/bin/bash
 
 # ============================================
-# MQTT User Management for MariaDB (Bash)
+# MQTT User Management for PostgreSQL (Bash)
 # ============================================
 
-# Конфигурация MariaDB
-DB_HOST="localhost"
-DB_PORT="3306"
-DB_NAME="mqtt_auth"
-DB_USER="mqtt_user"
-DB_PASS="MqttSecurePass123!"
+# Конфигурация PostgreSQL
+PG_HOST="localhost"
+PG_PORT="5432"
+PG_DB="mqtt_auth"
+PG_USER="sar-bc"
+PG_PASS="Vik159753"
 
 # Цвета для вывода
 RED='\033[0;31m'
@@ -20,12 +20,13 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# Проверка наличия mysql клиента
-check_mysql() {
-    if ! command -v mysql &> /dev/null; then
-        echo -e "${RED}❌ mysql client not found. Please install:${NC}"
-        echo "  Ubuntu/Debian: sudo apt install mariadb-client"
-        echo "  Alpine: apk add mariadb-client"
+# Проверка наличия psql
+check_psql() {
+    if ! command -v psql &> /dev/null; then
+        echo -e "${RED}❌ psql not found. Please install postgresql-client:${NC}"
+        echo "  Ubuntu/Debian: sudo apt install postgresql-client"
+        echo "  CentOS/RHEL: sudo yum install postgresql"
+        echo "  Alpine: apk add postgresql-client"
         exit 1
     fi
 }
@@ -33,7 +34,7 @@ check_mysql() {
 # Функция для выполнения SQL запросов
 execute_sql() {
     local query="$1"
-    mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -s -N -e "$query" 2>/dev/null
+    PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -t -A -c "$query" 2>/dev/null
 }
 
 # Генерация bcrypt хеша (через Python)
@@ -61,27 +62,32 @@ check_python_bcrypt() {
     fi
 }
 
-# Проверка подключения к MariaDB
+# Очистка экрана
+clear_screen() {
+    printf "\033c"
+}
+
+# Проверка подключения к PostgreSQL
 check_connection() {
-    echo -n "🔍 Проверка подключения к MariaDB... "
+    echo -n "🔍 Проверка подключения к PostgreSQL... "
     if execute_sql "SELECT 1;" &>/dev/null; then
         echo -e "${GREEN}OK${NC}"
         return 0
     else
         echo -e "${RED}FAILED${NC}"
-        echo -e "${RED}❌ Не удалось подключиться к MariaDB${NC}"
+        echo -e "${RED}❌ Не удалось подключиться к PostgreSQL${NC}"
         echo "Проверьте:"
-        echo "  - Запущен ли контейнер: docker ps | grep mariadb"
-        echo "  - Логи: docker logs mqtt_mariadb"
+        echo "  - Запущен ли контейнер: docker ps | grep postgres"
+        echo "  - Логи: docker logs mqtt_postgres"
         exit 1
     fi
 }
 
 # Показать меню
 show_menu() {
-    clear
+    clear_screen
     echo -e "${BLUE}╔══════════════════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}║     ${YELLOW}MQTT User Management for MariaDB${BLUE}                 ║${NC}"
+    echo -e "${BLUE}║     ${YELLOW}MQTT User Management for PostgreSQL${BLUE}               ║${NC}"
     echo -e "${BLUE}╚══════════════════════════════════════════════════════╝${NC}"
     echo ""
     echo -e "${CYAN}===================== ГЛАВНОЕ МЕНЮ =====================${NC}"
@@ -99,16 +105,17 @@ show_menu() {
     echo -n "Выберите действие [0-9]: "
 }
 
-# Меню ACL
+# Меню управления ACL
 show_acl_menu() {
-    clear
+    clear_screen
     echo -e "${PURPLE}===================== УПРАВЛЕНИЕ ACL =====================${NC}"
     echo -e "${YELLOW}1.${NC} 📖 Показать все ACL"
     echo -e "${YELLOW}2.${NC} ➕ Добавить ACL"
     echo -e "${YELLOW}3.${NC} 🗑️  Удалить ACL"
-    echo -e "${YELLOW}4.${NC} 🔙 Назад в главное меню"
+    echo -e "${YELLOW}4.${NC} 🗑️  Удалить все ACL пользователя"
+    echo -e "${YELLOW}5.${NC} 🔙 Назад в главное меню"
     echo -e "${PURPLE}========================================================${NC}"
-    echo -n "Выберите действие [1-4]: "
+    echo -n "Выберите действие [1-5]: "
 }
 
 # Список пользователей
@@ -118,18 +125,60 @@ list_users() {
     
     local result=$(execute_sql "
         SELECT 
-            CONCAT(
-                IF(enabled, '✅', '❌'), ' ',
-                IF(is_admin, '👑', '👤'), ' ',
-                username, ' (создан: ',
-                DATE_FORMAT(created_at, '%d.%m.%Y %H:%i'), ')'
-            )
+            CASE WHEN enabled THEN '✅' ELSE '❌' END || ' ' ||
+            CASE WHEN is_admin THEN '👑' ELSE '👤' END || ' ' ||
+            username || ' (создан: ' || TO_CHAR(created_at, 'DD.MM.YYYY HH24:MI') || ')' ||
+            CASE WHEN NOT enabled THEN ' [DISABLED]' ELSE '' END
         FROM users 
         ORDER BY username;
     ")
     
     if [ -z "$result" ]; then
         echo "  📭 Нет пользователей"
+    else
+        echo "$result" | while read line; do
+            echo "  $line"
+        done
+    fi
+    echo -e "${BLUE}────────────────────────────────────────────────${NC}"
+}
+
+# Список ACL
+list_acls() {
+    local username="$1"
+    
+    if [ -n "$username" ]; then
+        echo -e "\n${YELLOW}📋 ACL для пользователя '$username':${NC}"
+        local result=$(execute_sql "
+            SELECT 
+                CASE rw 
+                    WHEN 1 THEN '📖 READ'
+                    WHEN 2 THEN '✏️ WRITE'
+                    WHEN 3 THEN '📝 READWRITE'
+                END || ' → ' || topic ||
+                ' (создан: ' || TO_CHAR(created_at, 'DD.MM.YYYY') || ')'
+            FROM acls 
+            WHERE username = '$username'
+            ORDER BY topic;
+        ")
+    else
+        echo -e "\n${YELLOW}📋 Все ACL:${NC}"
+        local result=$(execute_sql "
+            SELECT 
+                username || ': ' ||
+                CASE rw 
+                    WHEN 1 THEN '📖 READ'
+                    WHEN 2 THEN '✏️ WRITE'
+                    WHEN 3 THEN '📝 READWRITE'
+                END || ' → ' || topic
+            FROM acls 
+            ORDER BY username, topic;
+        ")
+    fi
+    
+    echo -e "${BLUE}────────────────────────────────────────────────${NC}"
+    if [ -z "$result" ]; then
+        echo "  📭 Нет правил доступа"
     else
         echo "$result" | while read line; do
             echo "  $line"
@@ -168,27 +217,33 @@ add_user() {
         return
     fi
     
+    if [ ${#password} -lt 6 ]; then
+        echo -e "${RED}❌ Пароль должен быть не менее 6 символов${NC}"
+        return
+    fi
+    
     echo -n "Сделать администратором? (y/N): "
     read is_admin
     
-    local admin_flag="0"
-    [[ "$is_admin" == "y" ]] && admin_flag="1"
+    local admin_flag="false"
+    [[ "$is_admin" == "y" ]] && admin_flag="true"
     
     echo -n "🔐 Хеширование пароля... "
     local hash=$(generate_hash "$password")
     if [ $? -ne 0 ] || [ -z "$hash" ]; then
-        echo -e "${RED}❌ Ошибка хеширования${NC}"
+        echo -e "${RED}❌ Ошибка хеширования пароля${NC}"
         return
     fi
     echo -e "${GREEN}готово${NC}"
     
+    # Добавляем в базу
     execute_sql "
         INSERT INTO users (username, password_hash, is_admin) 
         VALUES ('$username', '$hash', $admin_flag);
-    "
+    " > /dev/null
     
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✅ Пользователь '$username' создан${NC}"
+        echo -e "${GREEN}✅ Пользователь '$username' успешно создан${NC}"
     else
         echo -e "${RED}❌ Ошибка создания пользователя${NC}"
     fi
@@ -221,12 +276,15 @@ change_password() {
     echo -n "🔐 Хеширование пароля... "
     local hash=$(generate_hash "$password")
     if [ $? -ne 0 ] || [ -z "$hash" ]; then
-        echo -e "${RED}❌ Ошибка хеширования${NC}"
+        echo -e "${RED}❌ Ошибка хеширования пароля${NC}"
         return
     fi
     echo -e "${GREEN}готово${NC}"
     
-    execute_sql "UPDATE users SET password_hash = '$hash' WHERE username = '$username';"
+    execute_sql "
+        UPDATE users SET password_hash = '$hash' WHERE username = '$username';
+    " > /dev/null
+    
     echo -e "${GREEN}✅ Пароль изменен для '$username'${NC}"
 }
 
@@ -235,9 +293,15 @@ toggle_admin() {
     local username="$1"
     local make_admin="$2"
     
-    execute_sql "UPDATE users SET is_admin = $make_admin WHERE username = '$username';"
+    local exists=$(execute_sql "SELECT username FROM users WHERE username = '$username';")
+    if [ -z "$exists" ]; then
+        echo -e "${RED}❌ Пользователь '$username' не найден${NC}"
+        return
+    fi
     
-    if [ "$make_admin" == "1" ]; then
+    execute_sql "UPDATE users SET is_admin = $make_admin WHERE username = '$username';" > /dev/null
+    
+    if [ "$make_admin" == "true" ]; then
         echo -e "${GREEN}✅ Пользователь '$username' теперь администратор${NC}"
     else
         echo -e "${GREEN}✅ У пользователя '$username' убраны права администратора${NC}"
@@ -249,9 +313,15 @@ toggle_user() {
     local username="$1"
     local enable="$2"
     
-    execute_sql "UPDATE users SET enabled = $enable WHERE username = '$username';"
+    local exists=$(execute_sql "SELECT username FROM users WHERE username = '$username';")
+    if [ -z "$exists" ]; then
+        echo -e "${RED}❌ Пользователь '$username' не найден${NC}"
+        return
+    fi
     
-    if [ "$enable" == "1" ]; then
+    execute_sql "UPDATE users SET enabled = $enable WHERE username = '$username';" > /dev/null
+    
+    if [ "$enable" == "true" ]; then
         echo -e "${GREEN}✅ Пользователь '$username' включен${NC}"
     else
         echo -e "${GREEN}✅ Пользователь '$username' отключен${NC}"
@@ -274,8 +344,10 @@ delete_user() {
     read confirm
     
     if [ "$confirm" == "y" ]; then
-        execute_sql "DELETE FROM users WHERE username = '$username';"
+        execute_sql "DELETE FROM users WHERE username = '$username';" > /dev/null
         echo -e "${GREEN}✅ Пользователь '$username' удален${NC}"
+    else
+        echo "Операция отменена"
     fi
 }
 
@@ -301,66 +373,40 @@ add_acl() {
     echo -n "Выбор [1-3]: "
     read rw_level
     
+    case $rw_level in
+        1) rw=1 ;;
+        2) rw=2 ;;
+        3) rw=3 ;;
+        *) echo -e "${RED}❌ Неверный выбор${NC}"; return ;;
+    esac
+    
+    # Проверяем, нет ли уже такого ACL
+    local exists_acl=$(execute_sql "
+        SELECT id FROM acls 
+        WHERE username = '$username' AND topic = '$topic';
+    ")
+    
+    if [ -n "$exists_acl" ]; then
+        echo -e "${RED}❌ ACL для '$username' на '$topic' уже существует${NC}"
+        return
+    fi
+    
     execute_sql "
         INSERT INTO acls (username, topic, rw) 
-        VALUES ('$username', '$topic', $rw_level)
-        ON DUPLICATE KEY UPDATE rw = $rw_level;
-    "
+        VALUES ('$username', '$topic', $rw);
+    " > /dev/null
     
-    local rw_text=""
-    case $rw_level in
-        1) rw_text="чтение" ;;
-        2) rw_text="запись" ;;
-        3) rw_text="чтение/запись" ;;
-    esac
-    echo -e "${GREEN}✅ ACL добавлен: $username может $rw_text на '$topic'${NC}"
-}
-
-# Список ACL
-list_acls() {
-    local username="$1"
-    
-    if [ -n "$username" ]; then
-        echo -e "\n${YELLOW}📋 ACL для пользователя '$username':${NC}"
-        local result=$(execute_sql "
-            SELECT 
-                CONCAT(
-                    CASE rw 
-                        WHEN 1 THEN '📖 READ'
-                        WHEN 2 THEN '✏️ WRITE'
-                        WHEN 3 THEN '📝 READWRITE'
-                    END, ' → ', topic
-                )
-            FROM acls 
-            WHERE username = '$username'
-            ORDER BY topic;
-        ")
+    if [ $? -eq 0 ]; then
+        local rw_text=""
+        case $rw in
+            1) rw_text="чтение" ;;
+            2) rw_text="запись" ;;
+            3) rw_text="чтение/запись" ;;
+        esac
+        echo -e "${GREEN}✅ ACL добавлен: $username может $rw_text на '$topic'${NC}"
     else
-        echo -e "\n${YELLOW}📋 Все ACL:${NC}"
-        local result=$(execute_sql "
-            SELECT 
-                CONCAT(
-                    username, ': ',
-                    CASE rw 
-                        WHEN 1 THEN '📖 READ'
-                        WHEN 2 THEN '✏️ WRITE'
-                        WHEN 3 THEN '📝 READWRITE'
-                    END, ' → ', topic
-                )
-            FROM acls 
-            ORDER BY username, topic;
-        ")
+        echo -e "${RED}❌ Ошибка добавления ACL${NC}"
     fi
-    
-    echo -e "${BLUE}────────────────────────────────────────────────${NC}"
-    if [ -z "$result" ]; then
-        echo "  📭 Нет правил доступа"
-    else
-        echo "$result" | while read line; do
-            echo "  $line"
-        done
-    fi
-    echo -e "${BLUE}────────────────────────────────────────────────${NC}"
 }
 
 # Удаление ACL
@@ -375,14 +421,57 @@ delete_acl() {
         return
     fi
     
-    # Показываем текущие ACL
+    # Показываем текущие ACL пользователя
     list_acls "$username"
     
-    echo -n "Введите топик для удаления: "
+    echo -n "Введите топик для удаления (или оставьте пустым для отмены): "
     read topic
     
-    execute_sql "DELETE FROM acls WHERE username = '$username' AND topic = '$topic';"
-    echo -e "${GREEN}✅ ACL удален${NC}"
+    if [ -z "$topic" ]; then
+        echo "Операция отменена"
+        return
+    fi
+    
+    execute_sql "
+        DELETE FROM acls 
+        WHERE username = '$username' AND topic = '$topic';
+    " > /dev/null
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✅ ACL удален${NC}"
+    else
+        echo -e "${RED}❌ Ошибка удаления ACL${NC}"
+    fi
+}
+
+# Удаление всех ACL пользователя
+delete_all_acls() {
+    echo -e "\n${RED}🗑️  Удаление всех ACL пользователя${NC}"
+    echo -n "Имя пользователя: "
+    read username
+    
+    local exists=$(execute_sql "SELECT username FROM users WHERE username = '$username';")
+    if [ -z "$exists" ]; then
+        echo -e "${RED}❌ Пользователь '$username' не найден${NC}"
+        return
+    fi
+    
+    local count=$(execute_sql "SELECT COUNT(*) FROM acls WHERE username = '$username';")
+    
+    if [ "$count" -eq 0 ]; then
+        echo "📭 У пользователя '$username' нет ACL"
+        return
+    fi
+    
+    echo -n "Удалить все $count ACL для '$username'? (y/N): "
+    read confirm
+    
+    if [ "$confirm" == "y" ]; then
+        execute_sql "DELETE FROM acls WHERE username = '$username';" > /dev/null
+        echo -e "${GREEN}✅ Все ACL для '$username' удалены${NC}"
+    else
+        echo "Операция отменена"
+    fi
 }
 
 # Управление ACL
@@ -393,24 +482,30 @@ manage_acl() {
         
         case $acl_choice in
             1)
-                clear
+                clear_screen
                 list_acls
                 echo -n "Нажмите Enter для продолжения..."
                 read
                 ;;
             2)
-                clear
+                clear_screen
                 add_acl
                 echo -n "Нажмите Enter для продолжения..."
                 read
                 ;;
             3)
-                clear
+                clear_screen
                 delete_acl
                 echo -n "Нажмите Enter для продолжения..."
                 read
                 ;;
             4)
+                clear_screen
+                delete_all_acls
+                echo -n "Нажмите Enter для продолжения..."
+                read
+                ;;
+            5)
                 return
                 ;;
             *)
@@ -424,9 +519,13 @@ manage_acl() {
 # Главная функция
 main() {
     # Проверки перед запуском
-    check_mysql
+    check_psql
     check_python_bcrypt
-    check_connection
+    
+    # Проверка подключения к БД
+    if ! check_connection; then
+        exit 1
+    fi
     
     while true; do
         show_menu
@@ -434,57 +533,57 @@ main() {
         
         case $choice in
             1)
-                clear
+                clear_screen
                 list_users
                 echo -n "Нажмите Enter для продолжения..."
                 read
                 ;;
             2)
-                clear
+                clear_screen
                 add_user
                 echo -n "Нажмите Enter для продолжения..."
                 read
                 ;;
             3)
-                clear
+                clear_screen
                 change_password
                 echo -n "Нажмите Enter для продолжения..."
                 read
                 ;;
             4)
-                clear
+                clear_screen
                 echo -n "Имя пользователя для назначения администратором: "
                 read username
-                toggle_admin "$username" "1"
+                toggle_admin "$username" "true"
                 echo -n "Нажмите Enter для продолжения..."
                 read
                 ;;
             5)
-                clear
+                clear_screen
                 echo -n "Имя пользователя для снятия прав администратора: "
                 read username
-                toggle_admin "$username" "0"
+                toggle_admin "$username" "false"
                 echo -n "Нажмите Enter для продолжения..."
                 read
                 ;;
             6)
-                clear
+                clear_screen
                 echo -n "Имя пользователя для включения: "
                 read username
-                toggle_user "$username" "1"
+                toggle_user "$username" "true"
                 echo -n "Нажмите Enter для продолжения..."
                 read
                 ;;
             7)
-                clear
+                clear_screen
                 echo -n "Имя пользователя для отключения: "
                 read username
-                toggle_user "$username" "0"
+                toggle_user "$username" "false"
                 echo -n "Нажмите Enter для продолжения..."
                 read
                 ;;
             8)
-                clear
+                clear_screen
                 delete_user
                 echo -n "Нажмите Enter для продолжения..."
                 read
