@@ -1,7 +1,7 @@
 # Этап 1: Сборка Go-плагина
 FROM golang:1.24-alpine AS builder
 
-# Устанавливаем зависимости для сборки
+# Устанавливаем зависимости для сборки (убрали sqlite-dev)
 RUN apk add --no-cache \
     git \
     gcc \
@@ -11,13 +11,17 @@ RUN apk add --no-cache \
     postgresql-dev \
     make
 
+# Важно: отключаем SQLite через тег сборки
+ENV CGO_CFLAGS="-I/usr/include -fPIC"
+ENV CGO_LDFLAGS="-shared"
+ENV GOFLAGS="-tags=sqlite_omit_load_extension"
+
 # Клонируем форк Go-плагина
 WORKDIR /src
 RUN git clone https://github.com/iegomez/mosquitto-go-auth.git .
 
-# Собираем плагин (для PostgreSQL)
-ENV CGO_CFLAGS="-I/usr/include -fPIC"
-ENV CGO_LDFLAGS="-shared"
+# Переходим в директорию и собираем
+WORKDIR /src
 RUN make
 
 # Этап 2: Финальный образ
