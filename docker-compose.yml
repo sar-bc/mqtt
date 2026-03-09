@@ -1,24 +1,23 @@
-version: '3.8'
-
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: mqtt_postgres
+  mariadb:
+    image: mariadb:10.6
+    container_name: mqtt_mariadb
     environment:
-      POSTGRES_DB: mqtt_auth
-      POSTGRES_USER: mqtt_admin
-      POSTGRES_PASSWORD: MqttSecurePass123!
-      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+      MARIADB_ROOT_PASSWORD: rootpassword123!
+      MARIADB_DATABASE: mqtt_auth
+      MARIADB_USER: mqtt_user
+      MARIADB_PASSWORD: MqttSecurePass123!
+      MARIADB_ROOT_HOST: '%'  # Разрешаем подключения с любого хоста
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      - ./mariadb_data:/var/lib/mysql
       - ./init:/docker-entrypoint-initdb.d
     ports:
-      - "5432:5432"  # только для отладки, можно убрать
+      - "3306:3306"
     networks:
       - mqtt_network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mqtt_admin -d mqtt_auth"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MARIADB_ROOT_PASSWORD"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,7 +26,7 @@ services:
     build: ./plugins
     container_name: mqtt_cont
     depends_on:
-      postgres:
+      mariadb:
         condition: service_healthy
     ports:
       - "1883:1883"
