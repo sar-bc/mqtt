@@ -3,10 +3,10 @@ services:
     image: mariadb:10.6
     container_name: mqtt_mariadb
     environment:
-      MARIADB_ROOT_PASSWORD: rootpassword123!
+      MARIADB_ROOT_PASSWORD: Vik159753
       MARIADB_DATABASE: mqtt_auth
-      MARIADB_USER: mqtt_user
-      MARIADB_PASSWORD: MqttSecurePass123!
+      MARIADB_USER: sar-bc
+      MARIADB_PASSWORD: Vik159753
       MARIADB_ROOT_HOST: '%'
     volumes:
       - ./mariadb_data:/var/lib/mysql
@@ -23,7 +23,7 @@ services:
       retries: 5
 
   mosquitto:
-    image: iegomez/mosquitto-go-auth:latest  # ← ВОТ ОН! Готовый образ
+    image: iegomez/mosquitto-go-auth:latest
     container_name: mqtt_cont
     depends_on:
       mariadb:
@@ -32,7 +32,7 @@ services:
       - "1883:1883"
       - "9001:9001"
     volumes:
-      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./config/mosquitto.conf:/etc/mosquitto/mosquitto.conf  # ← ИЗМЕНИЛИ ПУТЬ!
       - ./data:/mosquitto/data
       - ./log:/mosquitto/log
     networks:
