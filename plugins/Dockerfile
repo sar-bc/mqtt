@@ -1,14 +1,14 @@
 # Этап 1: Сборка Go-плагина
 FROM golang:1.24-alpine AS builder
 
-# Устанавливаем зависимости для сборки (убрали sqlite-dev)
+# Устанавливаем зависимости для сборки (ЗАМЕНЯЕМ postgresql-dev НА mariadb-dev)
 RUN apk add --no-cache \
     git \
     gcc \
     musl-dev \
     mosquitto-dev \
     openssl-dev \
-    postgresql-dev \
+    mariadb-dev \        
     make
 
 # Важно: отключаем SQLite через тег сборки
@@ -27,8 +27,8 @@ RUN make
 # Этап 2: Финальный образ
 FROM eclipse-mosquitto:2.0
 
-# Устанавливаем клиент PostgreSQL (для проверки соединения)
-RUN apk add --no-cache postgresql-client
+# Устанавливаем клиент MariaDB (ЗАМЕНЯЕМ postgresql-client НА mariadb-client)
+RUN apk add --no-cache mariadb-client 
 
 # Копируем собранный плагин
 COPY --from=builder /src/go-auth.so /mosquitto/plugins/
