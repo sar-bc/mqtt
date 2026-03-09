@@ -1,6 +1,5 @@
 # Этап 1: Сборка Go-плагина
-FROM golang:1.22-alpine AS builder
-
+FROM golang:1.24-alpine AS builder  
 # Устанавливаем зависимости для сборки
 RUN apk add --no-cache \
     git \
@@ -9,7 +8,7 @@ RUN apk add --no-cache \
     mosquitto-dev \
     openssl-dev \
     sqlite-dev \
-    make          # ← ДОБАВЬТЕ ЭТУ СТРОКУ!
+    make
 
 # Клонируем актуальный форк Go-плагина
 WORKDIR /src
