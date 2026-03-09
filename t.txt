@@ -1,0 +1,41 @@
+# ============================================
+# ОСНОВНЫЕ НАСТРОЙКИ
+# ============================================
+listener 1883 0.0.0.0          # ← РАЗРЕШАЕМ ВНЕШНИЕ ПОДКЛЮЧЕНИЯ!
+persistence true
+persistence_location /mosquitto/data/
+log_dest stdout
+log_type all
+allow_anonymous false
+
+# ============================================
+# ПЛАГИН АУТЕНТИФИКАЦИИ
+# ============================================
+auth_plugin /mosquitto/go-auth.so
+
+# ============================================
+# НАСТРОЙКИ POSTGRESQL (ПРАВИЛЬНЫЕ ИМЕНА!)
+# ============================================
+auth_opt_backends postgres
+
+# ВАЖНО: используем имена БЕЗ префикса postgres_
+auth_opt_pg_host postgres
+auth_opt_pg_port 5432
+auth_opt_pg_user sar-bc
+auth_opt_pg_password Vik159753
+auth_opt_pg_dbname mqtt_auth
+
+# SQL запросы
+auth_opt_pg_userquery SELECT password_hash FROM users WHERE username = $1 AND enabled = true
+auth_opt_pg_superquery SELECT is_admin FROM users WHERE username = $1 AND enabled = true
+
+# Дополнительные параметры
+auth_opt_pg_sslmode disable
+
+# ============================================
+# КЭШИРОВАНИЕ
+# ============================================
+auth_opt_cache true
+auth_opt_cache_type memory
+auth_opt_auth_cache_seconds 60
+auth_opt_acl_cache_seconds 300
