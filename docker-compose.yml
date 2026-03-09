@@ -1,7 +1,34 @@
+version: '3.8'
+
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: mqtt_postgres
+    environment:
+      POSTGRES_DB: mqtt_auth
+      POSTGRES_USER: mqtt_admin
+      POSTGRES_PASSWORD: MqttSecurePass123!
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"  # только для отладки, можно убрать
+    networks:
+      - mqtt_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mqtt_admin -d mqtt_auth"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   mosquitto:
     build: ./plugins
     container_name: mqtt_cont
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
       - "1883:1883"
       - "9001:9001"
@@ -9,6 +36,11 @@ services:
       - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf
       - ./data:/mosquitto/data
       - ./log:/mosquitto/log
-      - ./config:/mosquitto/config
+    networks:
+      - mqtt_network
     restart: unless-stopped
+
+networks:
+  mqtt_network:
+    driver: bridge
     

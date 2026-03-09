@@ -1,5 +1,25 @@
-*.pyc
+# Python
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+*.egg-info/
+
+# Базы данных
 *.db
 *.db-journal
-backup_*.db
+postgres_data/
+data/
+
+# Логи
+*.log
+log/
+
+# Временные файлы
+*.tmp
+*.bak
+*.swp
+.DS_Store
