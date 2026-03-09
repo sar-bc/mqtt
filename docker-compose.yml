@@ -1,23 +1,21 @@
 services:
-  mariadb:
-    image: mariadb:10.6
-    container_name: mqtt_mariadb
+  postgres:
+    image: postgres:15-alpine
+    container_name: mqtt_postgres
     environment:
-      MARIADB_ROOT_PASSWORD: Vik159753
-      MARIADB_DATABASE: mqtt_auth
-      MARIADB_USER: sar-bc
-      MARIADB_PASSWORD: Vik159753
-      MARIADB_ROOT_HOST: '%'
+      POSTGRES_DB: mqtt_auth
+      POSTGRES_USER: sar-bc
+      POSTGRES_PASSWORD: Vik159753
     volumes:
-      - ./mariadb_data:/var/lib/mysql
-      - ./init:/docker-entrypoint-initdb.d
+      - ./postgres_data:/var/lib/postgresql/data
+      - ./init/postgres.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "3306:3306"
+      - "5432:5432"
     networks:
       - mqtt_network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MARIADB_ROOT_PASSWORD"]
+      test: ["CMD-SHELL", "pg_isready -U sar-bc -d mqtt_auth"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,13 +24,13 @@ services:
     image: iegomez/mosquitto-go-auth:latest
     container_name: mqtt_cont
     depends_on:
-      mariadb:
+      postgres:
         condition: service_healthy
     ports:
       - "1883:1883"
       - "9001:9001"
     volumes:
-      - ./config/mosquitto.conf:/etc/mosquitto/mosquitto.conf  # ← ИЗМЕНИЛИ ПУТЬ!
+      - ./config/mosquitto.conf:/etc/mosquitto/mosquitto.conf
       - ./data:/mosquitto/data
       - ./log:/mosquitto/log
     networks:
@@ -42,3 +40,4 @@ services:
 networks:
   mqtt_network:
     driver: bridge
+    
