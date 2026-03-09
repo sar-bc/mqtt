@@ -8,7 +8,8 @@ RUN apk add --no-cache \
     musl-dev \
     mosquitto-dev \
     openssl-dev \
-    sqlite-dev
+    sqlite-dev \
+    make          # ← ДОБАВЬТЕ ЭТУ СТРОКУ!
 
 # Клонируем актуальный форк Go-плагина
 WORKDIR /src
