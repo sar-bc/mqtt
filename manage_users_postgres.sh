@@ -34,7 +34,7 @@ check_psql() {
 # Функция для выполнения SQL запросов
 execute_sql() {
     local query="$1"
-    PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -t -A -c "$query" 2>/dev/null
+    PGPASSWORD="$PG_PASS" psql -h "$PG_HOST" -p "$PG_PORT" -U "$PG_USER" -d "$PG_DB" -t -A -c "$query" 2>&1
 }
 
 # Генерация bcrypt хеша (через Python)
@@ -70,12 +70,14 @@ clear_screen() {
 # Проверка подключения к PostgreSQL
 check_connection() {
     echo -n "🔍 Проверка подключения к PostgreSQL... "
-    if execute_sql "SELECT 1;" &>/dev/null; then
+    local result=$(execute_sql "SELECT 1;" 2>&1)
+    if [ "$result" == "1" ]; then
         echo -e "${GREEN}OK${NC}"
         return 0
     else
         echo -e "${RED}FAILED${NC}"
         echo -e "${RED}❌ Не удалось подключиться к PostgreSQL${NC}"
+        echo "Ошибка: $result"
         echo "Проверьте:"
         echo "  - Запущен ли контейнер: docker ps | grep postgres"
         echo "  - Логи: docker logs mqtt_postgres"
@@ -125,10 +127,10 @@ list_users() {
     
     local result=$(execute_sql "
         SELECT 
-            CASE WHEN enabled THEN '✅' ELSE '❌' END || ' ' ||
-            CASE WHEN is_admin THEN '👑' ELSE '👤' END || ' ' ||
+            CASE WHEN enabled=1 THEN '✅' ELSE '❌' END || ' ' ||
+            CASE WHEN is_admin=1 THEN '👑' ELSE '👤' END || ' ' ||
             username || ' (создан: ' || TO_CHAR(created_at, 'DD.MM.YYYY HH24:MI') || ')' ||
-            CASE WHEN NOT enabled THEN ' [DISABLED]' ELSE '' END
+            CASE WHEN enabled=0 THEN ' [DISABLED]' ELSE '' END
         FROM users 
         ORDER BY username;
     ")
@@ -225,8 +227,8 @@ add_user() {
     echo -n "Сделать администратором? (y/N): "
     read is_admin
     
-    local admin_flag="false"
-    [[ "$is_admin" == "y" ]] && admin_flag="true"
+    local admin_flag=0
+    [[ "$is_admin" == "y" ]] && admin_flag=1
     
     echo -n "🔐 Хеширование пароля... "
     local hash=$(generate_hash "$password")
@@ -237,12 +239,13 @@ add_user() {
     echo -e "${GREEN}готово${NC}"
     
     # Добавляем в базу
-    execute_sql "
+    local result=$(execute_sql "
         INSERT INTO users (username, password_hash, is_admin) 
-        VALUES ('$username', '$hash', $admin_flag);
-    " > /dev/null
+        VALUES ('$username', '$hash', $admin_flag)
+        RETURNING username;
+    ")
     
-    if [ $? -eq 0 ]; then
+    if [ -n "$result" ]; then
         echo -e "${GREEN}✅ Пользователь '$username' успешно создан${NC}"
     else
         echo -e "${RED}❌ Ошибка создания пользователя${NC}"
@@ -281,11 +284,16 @@ change_password() {
     fi
     echo -e "${GREEN}готово${NC}"
     
-    execute_sql "
-        UPDATE users SET password_hash = '$hash' WHERE username = '$username';
-    " > /dev/null
+    local result=$(execute_sql "
+        UPDATE users SET password_hash = '$hash' WHERE username = '$username'
+        RETURNING username;
+    ")
     
-    echo -e "${GREEN}✅ Пароль изменен для '$username'${NC}"
+    if [ -n "$result" ]; then
+        echo -e "${GREEN}✅ Пароль изменен для '$username'${NC}"
+    else
+        echo -e "${RED}❌ Ошибка смены пароля${NC}"
+    fi
 }
 
 # Переключение прав администратора
@@ -299,12 +307,16 @@ toggle_admin() {
         return
     fi
     
-    execute_sql "UPDATE users SET is_admin = $make_admin WHERE username = '$username';" > /dev/null
+    local result=$(execute_sql "UPDATE users SET is_admin = $make_admin WHERE username = '$username' RETURNING username;")
     
-    if [ "$make_admin" == "true" ]; then
-        echo -e "${GREEN}✅ Пользователь '$username' теперь администратор${NC}"
+    if [ -n "$result" ]; then
+        if [ "$make_admin" == "1" ]; then
+            echo -e "${GREEN}✅ Пользователь '$username' теперь администратор${NC}"
+        else
+            echo -e "${GREEN}✅ У пользователя '$username' убраны права администратора${NC}"
+        fi
     else
-        echo -e "${GREEN}✅ У пользователя '$username' убраны права администратора${NC}"
+        echo -e "${RED}❌ Ошибка изменения прав${NC}"
     fi
 }
 
@@ -319,12 +331,16 @@ toggle_user() {
         return
     fi
     
-    execute_sql "UPDATE users SET enabled = $enable WHERE username = '$username';" > /dev/null
+    local result=$(execute_sql "UPDATE users SET enabled = $enable WHERE username = '$username' RETURNING username;")
     
-    if [ "$enable" == "true" ]; then
-        echo -e "${GREEN}✅ Пользователь '$username' включен${NC}"
+    if [ -n "$result" ]; then
+        if [ "$enable" == "1" ]; then
+            echo -e "${GREEN}✅ Пользователь '$username' включен${NC}"
+        else
+            echo -e "${GREEN}✅ Пользователь '$username' отключен${NC}"
+        fi
     else
-        echo -e "${GREEN}✅ Пользователь '$username' отключен${NC}"
+        echo -e "${RED}❌ Ошибка изменения статуса${NC}"
     fi
 }
 
@@ -344,8 +360,12 @@ delete_user() {
     read confirm
     
     if [ "$confirm" == "y" ]; then
-        execute_sql "DELETE FROM users WHERE username = '$username';" > /dev/null
-        echo -e "${GREEN}✅ Пользователь '$username' удален${NC}"
+        local result=$(execute_sql "DELETE FROM users WHERE username = '$username' RETURNING username;")
+        if [ -n "$result" ]; then
+            echo -e "${GREEN}✅ Пользователь '$username' удален${NC}"
+        else
+            echo -e "${RED}❌ Ошибка удаления пользователя${NC}"
+        fi
     else
         echo "Операция отменена"
     fi
@@ -391,12 +411,13 @@ add_acl() {
         return
     fi
     
-    execute_sql "
+    local result=$(execute_sql "
         INSERT INTO acls (username, topic, rw) 
-        VALUES ('$username', '$topic', $rw);
-    " > /dev/null
+        VALUES ('$username', '$topic', $rw)
+        RETURNING id;
+    ")
     
-    if [ $? -eq 0 ]; then
+    if [ -n "$result" ]; then
         local rw_text=""
         case $rw in
             1) rw_text="чтение" ;;
@@ -432,12 +453,13 @@ delete_acl() {
         return
     fi
     
-    execute_sql "
+    local result=$(execute_sql "
         DELETE FROM acls 
-        WHERE username = '$username' AND topic = '$topic';
-    " > /dev/null
+        WHERE username = '$username' AND topic = '$topic'
+        RETURNING id;
+    ")
     
-    if [ $? -eq 0 ]; then
+    if [ -n "$result" ]; then
         echo -e "${GREEN}✅ ACL удален${NC}"
     else
         echo -e "${RED}❌ Ошибка удаления ACL${NC}"
@@ -467,7 +489,7 @@ delete_all_acls() {
     read confirm
     
     if [ "$confirm" == "y" ]; then
-        execute_sql "DELETE FROM acls WHERE username = '$username';" > /dev/null
+        local result=$(execute_sql "DELETE FROM acls WHERE username = '$username' RETURNING COUNT(*) as count;")
         echo -e "${GREEN}✅ Все ACL для '$username' удалены${NC}"
     else
         echo "Операция отменена"
@@ -554,7 +576,7 @@ main() {
                 clear_screen
                 echo -n "Имя пользователя для назначения администратором: "
                 read username
-                toggle_admin "$username" "true"
+                toggle_admin "$username" "1"
                 echo -n "Нажмите Enter для продолжения..."
                 read
                 ;;
@@ -562,7 +584,7 @@ main() {
                 clear_screen
                 echo -n "Имя пользователя для снятия прав администратора: "
                 read username
-                toggle_admin "$username" "false"
+                toggle_admin "$username" "0"
                 echo -n "Нажмите Enter для продолжения..."
                 read
                 ;;
@@ -570,7 +592,7 @@ main() {
                 clear_screen
                 echo -n "Имя пользователя для включения: "
                 read username
-                toggle_user "$username" "true"
+                toggle_user "$username" "1"
                 echo -n "Нажмите Enter для продолжения..."
                 read
                 ;;
@@ -578,7 +600,7 @@ main() {
                 clear_screen
                 echo -n "Имя пользователя для отключения: "
                 read username
-                toggle_user "$username" "false"
+                toggle_user "$username" "0"
                 echo -n "Нажмите Enter для продолжения..."
                 read
                 ;;
