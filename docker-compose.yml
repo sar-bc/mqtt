@@ -22,7 +22,7 @@ services:
 
   mqtt:
     # ВМЕСТО build: . используем готовый образ!
-    image: alex4108/mosquitto-auth-plugin:latest
+    image: jllopis/mosquitto-auth-plugin:latest
     container_name: mqtt_cont
     restart: unless-stopped
     ports:
