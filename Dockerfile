@@ -17,7 +17,6 @@ RUN git clone https://github.com/jpmens/mosquitto-auth-plug.git
 # Компилируем плагин (простой подход)
 WORKDIR /tmp/mosquitto-auth-plug
 RUN cp config.mk.in config.mk && \
-    # Включаем PostgreSQL, отключаем всё остальное через простые замены
     sed -i 's/#BE_POSTGRES ?= yes/BE_POSTGRES ?= yes/' config.mk && \
     sed -i 's/BE_MYSQL ?= yes/#BE_MYSQL ?= no/' config.mk && \
     sed -i 's/BE_SQLITE ?= yes/#BE_SQLITE ?= no/' config.mk && \
@@ -26,9 +25,7 @@ RUN cp config.mk.in config.mk && \
     sed -i 's/BE_HTTP ?= yes/#BE_HTTP ?= no/' config.mk && \
     sed -i 's/BE_JWT ?= yes/#BE_JWT ?= no/' config.mk && \
     sed -i 's/BE_MONGO ?= yes/#BE_MONGO ?= no/' config.mk && \
-    # Проверяем результат
     cat config.mk | grep -E "BE_.* \?=" && \
-    # Компилируем
     make
 
 # Финальный образ
