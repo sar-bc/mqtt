@@ -10,30 +10,26 @@ RUN apk add --no-cache \
     postgresql-dev \
     linux-headers
 
-# Клонируем и компилируем плагин
+# Клонируем плагин
 WORKDIR /tmp
 RUN git clone https://github.com/jpmens/mosquitto-auth-plug.git
+
+# Компилируем плагин (простой подход)
 WORKDIR /tmp/mosquitto-auth-plug
-
-# Правильно настраиваем config.mk - отключаем MySQL и SQLite, включаем PostgreSQL
 RUN cp config.mk.in config.mk && \
-    # Включаем PostgreSQL
-    sed -i 's/^#\(BE_POSTGRES ?= yes\)/\1/' config.mk && \
-    # Отключаем MySQL (заменяем 'yes' на 'no')
-    sed -i 's/^\(BE_MYSQL ?= \)yes/\1no/' config.mk && \
-    # Отключаем SQLite
-    sed -i 's/^\(BE_SQLITE ?= \)yes/\1no/' config.mk && \
-    # Убеждаемся, что другие бэкенды отключены
-    sed -i 's/^\(BE_REDIS ?= \)yes/\1no/' config.mk && \
-    sed -i 's/^\(BE_LDAP ?= \)yes/\1no/' config.mk && \
-    sed -i 's/^\(BE_HTTP ?= \)yes/\1no/' config.mk && \
-    sed -i 's/^\(BE_JWT ?= \)yes/\1no/' config.mk && \
-    sed -i 's/^\(BE_MONGO ?= \)yes/\1no/' config.mk && \
+    # Включаем PostgreSQL, отключаем всё остальное через простые замены
+    sed -i 's/#BE_POSTGRES ?= yes/BE_POSTGRES ?= yes/' config.mk && \
+    sed -i 's/BE_MYSQL ?= yes/#BE_MYSQL ?= no/' config.mk && \
+    sed -i 's/BE_SQLITE ?= yes/#BE_SQLITE ?= no/' config.mk && \
+    sed -i 's/BE_REDIS ?= yes/#BE_REDIS ?= no/' config.mk && \
+    sed -i 's/BE_LDAP ?= yes/#BE_LDAP ?= no/' config.mk && \
+    sed -i 's/BE_HTTP ?= yes/#BE_HTTP ?= no/' config.mk && \
+    sed -i 's/BE_JWT ?= yes/#BE_JWT ?= no/' config.mk && \
+    sed -i 's/BE_MONGO ?= yes/#BE_MONGO ?= no/' config.mk && \
     # Проверяем результат
-    cat config.mk | grep "BE_"
-
-# Компилируем
-RUN make
+    cat config.mk | grep -E "BE_.* \?=" && \
+    # Компилируем
+    make
 
 # Финальный образ
 FROM eclipse-mosquitto:2.0.18
