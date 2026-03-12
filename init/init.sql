@@ -1,6 +1,4 @@
--- init/init.sql (фрагмент)
-
--- Таблица users остается, но поле password_hash теперь будет содержать PBKDF2-хеш
+-- Создание таблицы пользователей
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255) UNIQUE NOT NULL,
@@ -8,19 +6,17 @@ CREATE TABLE IF NOT EXISTS users (
     is_superuser SMALLINT DEFAULT 0
 );
 
--- Таблица acls остается без изменений
+-- Создание таблицы ACL
 CREATE TABLE IF NOT EXISTS acls (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255) NOT NULL,
     topic VARCHAR(255) NOT NULL,
-    rw INTEGER NOT NULL CHECK (rw IN (1, 2, 3))
+    rw INTEGER NOT NULL CHECK (rw IN (1, 2, 3))  -- 1=read, 2=write, 3=readwrite
 );
 
 -- Индексы
 CREATE INDEX IF NOT EXISTS idx_users_username ON users (username);
 CREATE INDEX IF NOT EXISTS idx_acls_username ON acls (username);
 
--- !!! ВНИМАНИЕ: Тестового пользователя нужно добавить с правильным хешем PBKDF2.
--- Временно удалите или закомментируйте вставку с bcrypt-хешем.
--- Правильный хеш можно сгенерировать позже через утилиту np или адаптированный Python-скрипт.
--- INSERT INTO users (username, password_hash, is_superuser) VALUES ('test', '...', 0);
+-- ⚠️ ВНИМАНИЕ: Тестовый пользователь НЕ ДОБАВЛЯЕТСЯ!
+-- Его нужно создать через обновленный Python-скрипт, который генерирует PBKDF2-хеши.

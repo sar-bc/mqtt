@@ -1,43 +1,41 @@
+version: '3.8'
+
 services:
   postgres:
-    image: postgres:14-alpine
+    image: postgres:15-alpine
     container_name: mqtt_postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: mqtt_auth
-      POSTGRES_USER: sar-bc
-      POSTGRES_PASSWORD: Vik159753
+      POSTGRES_USER: mqtt_user
+      POSTGRES_PASSWORD: Vik159753  
+      POSTGRES_DB: mqtt
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
-      - ./init/postgres.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - "5432:5432"
+      - ./init:/docker-entrypoint-initdb.d
     networks:
-      - mqtt_network
-    restart: unless-stopped
+      - mqtt-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sar-bc -d mqtt_auth"]
+      test: ["CMD-SHELL", "pg_isready -U mqtt_user"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  mosquitto:
-    image: iegomez/mosquitto-go-auth:latest
+  mqtt:
+    build: .  # ← ВАЖНО: Сборка из вашего Dockerfile, а не готовый образ
     container_name: mqtt_cont
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./config:/mosquitto/config
+      - ./data:/mosquitto/data
+      - ./log:/mosquitto/log
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - "1883:1883"
-      - "9001:9001"
-    volumes:
-      - ./config/mosquitto.conf:/etc/mosquitto/mosquitto.conf
-      - ./data:/mosquitto/data
-      - ./log:/mosquitto/log
     networks:
-      - mqtt_network
-    restart: unless-stopped
+      - mqtt-network
 
 networks:
-  mqtt_network:
+  mqtt-network:
     driver: bridge
-    
