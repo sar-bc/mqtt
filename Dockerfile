@@ -1,14 +1,14 @@
 # Dockerfile
 FROM eclipse-mosquitto:2.0.18 AS builder
 
-# Устанавливаем зависимости для компиляции
-RUN apt-get update && apt-get install -y \
+# Устанавливаем зависимости для компиляции (Alpine Linux использует apk)
+RUN apk add --no-cache \
     git \
-    build-essential \
-    libmosquitto-dev \
-    libssl-dev \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+    build-base \
+    mosquitto-dev \
+    openssl-dev \
+    postgresql-dev \
+    linux-headers
 
 # Клонируем и компилируем плагин
 WORKDIR /tmp
