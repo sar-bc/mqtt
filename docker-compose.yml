@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: mqtt_user
-      POSTGRES_PASSWORD: Vik159753  
+      POSTGRES_PASSWORD: your_strong_password  # ⚠️ ИЗМЕНИТЕ
       POSTGRES_DB: mqtt
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
@@ -21,7 +21,8 @@ services:
       retries: 5
 
   mqtt:
-    build: .  # ← ВАЖНО: Сборка из вашего Dockerfile, а не готовый образ
+    # ВМЕСТО build: . используем готовый образ!
+    image: alex4108/mosquitto-auth-plugin:latest
     container_name: mqtt_cont
     restart: unless-stopped
     ports:
