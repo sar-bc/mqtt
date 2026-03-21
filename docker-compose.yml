@@ -1,42 +1,12 @@
-version: '3.8'
-
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: mqtt_postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: mqtt_user
-      POSTGRES_PASSWORD: your_strong_password  # ⚠️ ИЗМЕНИТЕ
-      POSTGRES_DB: mqtt
-    volumes:
-      - ./postgres_data:/var/lib/postgresql/data
-      - ./init:/docker-entrypoint-initdb.d
-    networks:
-      - mqtt-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mqtt_user"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  mqtt:
-    # ВМЕСТО build: . используем готовый образ!
-    image: jllopis/mosquitto-auth-plugin:latest
+  mosquitto:
+    image: eclipse-mosquitto
     container_name: mqtt_cont
-    restart: unless-stopped
     ports:
       - "1883:1883"
+      - "9001:9001"
     volumes:
       - ./config:/mosquitto/config
       - ./data:/mosquitto/data
       - ./log:/mosquitto/log
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - mqtt-network
-
-networks:
-  mqtt-network:
-    driver: bridge
+    restart: unless-stopped

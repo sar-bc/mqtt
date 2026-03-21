@@ -1,3 +1,0 @@
-bcrypt
-psycopg2-binary
-passlib 
