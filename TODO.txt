@@ -1,0 +1,7 @@
+Создание файла паролей
+docker run --rm -v $(pwd)/config:/mosquitto/config eclipse-mosquitto sh -c "mosquitto_passwd -c -b /mosquitto/config/passwords.txt sar-bc Vik159753 && chown 1883:1883 /mosquitto/config/passwords.txt && chmod 600 /mosquitto/config/passwords.txt"
+Добавление пользователя
+docker run --rm -v $(pwd)/config:/mosquitto/config eclipse-mosquitto sh -c "mosquitto_passwd -b /mosquitto/config/passwords.txt новый_пользователь новый_пароль && chown 1883:1883 /mosquitto/config/passwords.txt && chmod 600 /mosquitto/config/passwords.txt"
+
+Удаление пользователя
+docker run --rm -v $(pwd)/config:/mosquitto/config eclipse-mosquitto sh -c "mosquitto_passwd -D /mosquitto/config/passwords.txt имя_пользователя && chown 1883:1883 /mosquitto/config/passwords.txt && chmod 600 /mosquitto/config/passwords.txt"
